@@ -22,12 +22,12 @@ type Bucket struct {
 	Destination                    string
 	BucketLabels                   map[string]string
 	BuildLabels                    map[string]string
-	SourceImagesToParentIterations map[string]SourceIteration
+	SourceImagesToParentIterations map[string]ParentIteration
 	Iteration                      *Iteration
 	client                         *Client
 }
 
-type SourceIteration struct {
+type ParentIteration struct {
 	IterationID string
 	ChannelID   string
 }
@@ -38,7 +38,7 @@ func NewBucketWithIteration(opts IterationOptions) (*Bucket, error) {
 	b := Bucket{
 		BucketLabels:                   make(map[string]string),
 		BuildLabels:                    make(map[string]string),
-		SourceImagesToParentIterations: make(map[string]SourceIteration),
+		SourceImagesToParentIterations: make(map[string]ParentIteration),
 	}
 
 	i, err := NewIteration(opts)
