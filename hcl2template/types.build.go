@@ -254,19 +254,36 @@ func (p *Parser) decodeBuildConfig(block *hcl.Block, cfg *PackerConfig) (*BuildB
 			cfg.bucket.RegisterBuildForComponent(source.String())
 		}
 
-		// Known HCP Packer Image Datasource, whose id is the SourceImageId for some build.
-		const hcpDatasourceType string = "hcp-packer-image"
+		// Known HCP Packer Image Datasource, whose id is the SourceImageId and ChannelID for some build.
 		values := ectx.Variables[dataAccessor].AsValueMap()
 
-		dsValues, ok := values[hcpDatasourceType]
+		const hcpImageDatasourceType string = "hcp-packer-image"
+		imageDatasourceValues, ok := values[hcpImageDatasourceType]
 		if !ok {
 			return build, diags
 		}
 
-		for _, value := range dsValues.AsValueMap() {
+		const hcpIterationDatasourceType string = "hcp-packer-iteration"
+		iterationDatasourceValues, ok := values[hcpIterationDatasourceType]
+		if !ok {
+			return build, diags
+		}
+
+		for _, value := range imageDatasourceValues.AsValueMap() {
 			values := value.AsValueMap()
 			imgID, itID := values["id"], values["iteration_id"]
-			cfg.bucket.SourceImagesToParentIterations[imgID.AsString()] = itID.AsString()
+			sourceIteration := packerregistry.SourceIteration{
+				IterationID: itID.AsString(),
+			}
+			for _, itValue := range iterationDatasourceValues.AsValueMap() {
+				itValues := itValue.AsValueMap()
+				if itValues["id"] == itID {
+					channelID := itValues["channel_id"]
+					sourceIteration.ChannelID = channelID.AsString()
+					break
+				}
+			}
+			cfg.bucket.SourceImagesToParentIterations[imgID.AsString()] = sourceIteration
 		}
 	}
 
