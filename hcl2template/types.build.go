@@ -263,7 +263,18 @@ func (p *Parser) decodeBuildConfig(block *hcl.Block, cfg *PackerConfig) (*BuildB
 			return build, diags
 		}
 
+		// On validate datasources are not evaluated so this value is unknown
+		if !dsValues.IsWhollyKnown() {
+			return build, diags
+		}
+
 		for _, value := range dsValues.AsValueMap() {
+			// Safety check for possible unknown values.
+			// IsWhollyKnown above should prevent us from getting here but just in case.
+			if !value.IsKnown() {
+				continue
+			}
+
 			values := value.AsValueMap()
 			imgID, itID := values["id"], values["iteration_id"]
 			cfg.bucket.SourceImagesToParentIterations[imgID.AsString()] = itID.AsString()
